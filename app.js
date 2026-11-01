@@ -8,7 +8,8 @@ const defaults={mode:'wake',time:'07:00',date:nextDate('07:00'),buffer:15,cycle:
 let saved=null;try{saved=localStorage.getItem('nachtplan:preferences');}catch{}
 let state=parseHash(location.hash)||preferences(saved,defaults);
 if(!location.hash)state.date=nextDate(state.time);
-let rows=[],selected=5,calculatedNow=new Date(),toastTimer;
+let rows=[],selected=readPick(),calculatedNow=new Date(),toastTimer;
+function readPick(){const n=Number(new URLSearchParams(location.hash.slice(1)).get('pick'));return [3,4,5,6].includes(n)?n:5;}
 const day=d=>dateKey(d)===dateKey(new Date())?'Heute':(()=>{const n=new Date();n.setDate(n.getDate()+1);return dateKey(d)===dateKey(n)?'Morgen':full(d);})();
 function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),4500);}
 function sync(){
@@ -69,10 +70,10 @@ $('calendar').addEventListener('click',()=>{
 $('share').addEventListener('click',async()=>{
  // Freeze “now” as an explicit bedtime so the same plan can be reopened.
  const s=state.mode==='now'?{...state,mode:'bed',date:dateKey(calculatedNow),time:fmt(calculatedNow)}:state;
- const url=location.origin+location.pathname+shareHash(s);
+ const url=location.origin+location.pathname+shareHash(s)+'&pick='+selected;
  try{await navigator.clipboard.writeText(url);toast('Link kopiert. Zeiten gelten in der Gerätezeitzone.');}catch{window.prompt('Diesen Link kopieren (Gerätezeitzone beachten):',url);}
 });
-window.addEventListener('hashchange',()=>{const s=parseHash(location.hash);if(s){state=s;sync();compute();}else if(location.hash)toast('Ungültiger Plan-Link. Dein aktueller Plan bleibt unverändert.');});
+window.addEventListener('hashchange',()=>{const s=parseHash(location.hash);if(s){state=s;selected=readPick();sync();compute();}else if(location.hash)toast('Ungültiger Plan-Link. Dein aktueller Plan bleibt unverändert.');});
 $('privacy').addEventListener('click',()=>$('privacy-dialog').showModal());$('close-privacy').addEventListener('click',()=>$('privacy-dialog').close());
 $('clear').addEventListener('click',()=>{try{localStorage.removeItem('nachtplan:preferences');toast('Lokale Einstellungen gelöscht.');}catch{toast('Browserspeicher nicht verfügbar.');}});
 sync();compute();if(location.hash&&!parseHash(location.hash))toast('Ungültiger Plan-Link. Standard-Einstellungen geladen.');

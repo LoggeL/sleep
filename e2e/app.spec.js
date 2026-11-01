@@ -19,7 +19,8 @@ test('all modes, local preferences, share and calendar work',async({page})=>{
  const d=await download;const stream=await d.createReadStream();let ics='';for await(const chunk of stream)ics+=chunk;
  expect(ics).toContain('DTSTART:20261102T220000Z');expect(ics).toContain('DTEND:20261103T071500Z');
  await page.locator('#share').click();const url=await page.evaluate(()=>navigator.clipboard.readText());expect(url).toContain('mode=bed');
- await page.goto(url);await expect(page.locator('#time')).toHaveValue('23:00');
+ await page.goto(url);await page.reload();await expect(page.locator('#time')).toHaveValue('23:00');
+ await expect(page.locator('[data-cycles="6"]')).toHaveAttribute('aria-pressed','true');
  await page.getByRole('button',{name:'Jetzt schlafen',exact:true}).click();
  await expect(page.locator('#time-fields')).toBeHidden();await expect(page.locator('.option')).toHaveCount(4);
  await page.locator('[data-cycles="6"]').focus();await page.waitForTimeout(1300);
